@@ -67,22 +67,6 @@ union Quaternion {
 };
 const inline  Quaternion identity = { 1, 0, 0, 0 };
 
-/*
-struct Quaternion_Interpolator {
-    Quaternion current;
-    Quaternion target;
-    i64 num_steps;
-
-    auto operator()() -> Quaternion {
-
-    }
-
-    Quaternion(Quaternion a, Quaternion b, i64 steps) :
-        current(a), target(b), num_steps(steps)
-    {}
-    
-};
-*/
 
 
 auto sign(Scalar x) -> Scalar {

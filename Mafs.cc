@@ -106,11 +106,12 @@ auto main() -> i32 {
     // Get the rotation matrix of a quaternion
     //
     // q = [ 0, 0.707, 0.707, 0 ]
-    //     
+    //     q is xyzw     
+    //
     //     [ 0, 1, 0 ]
-    // Q = [ 1, 0, 0 ]
+    // R = [ 1, 0, 0 ]
     //     [ 0, 0,-1 ]
-    //     
+    //
     )";
 
     {
@@ -129,6 +130,7 @@ auto main() -> i32 {
     std::cout << " - Get magnitude and normalise:\n\t{ 3, 6, 5 } has magnitude: "
               << print(magnitude(Vector<3> {6, 3, 2})) << ". Normed: " << print(normalise(Vector<3> {6, 3, 2})) << "\n\n";
 
-    std::cout << " - Multiply, invert, or conjugate Quaternions:\n\t" << print(Quaternion { 0.3, 0.2, 0.2, 0.6 } * Quaternion { 0.3, 0.2, 0.2, 0.6}) << "\n\n";
+    std::cout << " - Multiply, invert, or conjugate Quaternions:\n\t" << print(Quaternion { 0.3, 0.2, 0.2, 0.6 } *
+                                                                               Quaternion { 0.3, 0.2, 0.2, 0.6}) << "\n\n";
 
 }
