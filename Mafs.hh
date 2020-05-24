@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <cmath>
 #include <cassert>
 #include <iostream>
@@ -9,7 +11,8 @@ namespace mafs {
 using i32 = int32_t;
 using i64 = int64_t;
 
-using Scalar = float;
+using Scalar = double;
+const inline Scalar pi = 3.14159265;
 
 #define MAFS_FOR(N)  for (i64 i = 0; i < (N); i++)
 #define vec_fn  template <i64 n> auto
@@ -20,18 +23,20 @@ template <i64 n>
 union Vector {
     static_assert(n > 1, "Vector size must be at least 2");
 
-    Scalar data[n] = { 0.f };
+    Scalar data[n];
     struct { Scalar x, y, z, w; };
 
-    Scalar& operator[](i64 i);
+    auto operator[](i64 i) -> Scalar& {
+        return data[i];
+    }
 };
 
-// Specializing the vector type allows us to prevent use of
+// Vector template specialization allows us to prevent use of
 // vector components that aren't in a vector of that size.
 // So, access specifying the `z` component of a `Vector<2>` is a compile-time error
 #define SPECIALIZE_VECTOR(N, components)  \
 template<> union Vector<N> {              \
-    Scalar data[N] = { 0.f };             \
+    Scalar data[N];                       \
     struct { Scalar components ; };       \
     auto operator[](i64 i) -> Scalar& {   \
         return data[i];                   \
@@ -50,30 +55,23 @@ SPECIALIZE_VECTOR(4, x COMMA y COMMA z COMMA w);
 template <i64 n, i64 m>
 struct Matrix {
     Scalar data[n][m];
-    Scalar* operator[](i64 i);
+
+    auto operator[](i64 i) -> Scalar* {
+        return data[i];
+    }
 };
-
-
-
-mat_fn Matrix<n, m>::operator[](i64 i) -> Scalar* {
-    return data[i];
-}
-
-vec_fn Vector<n>::operator[](i64 i) -> Scalar& {
-    return data[i];
-}
 
 
 
 #define OPERATION_ON_VECTORS(op)                                               \
 template <i64 a, i64 b>                                                        \
 auto operator op(Vector<a> lhs, Vector<b> rhs) -> Vector<std::max(a, b)> {     \
-    const i64 larger  = std::max(a, b);                                        \
+    const i64 greater  = std::max(a, b);                                       \
     const i64 smaller = std::min(a, b);                                        \
                                                                                \
-    Vector<larger> out;                                                        \
+    Vector<greater> out;                                                       \
                                                                                \
-    MAFS_FOR(larger) {                                                         \
+    MAFS_FOR(greater) {                                                        \
         if (i < smaller) out[i] = rhs[i] op lhs[i];                            \
         else out[i] = a > b ? lhs[i] : rhs[i];                                 \
     }                                                                          \
@@ -103,19 +101,19 @@ OPERATION_ON_VECTOR_AND_SCALAR(/)
 
 
 vec_fn negate(Vector<n> vec) -> Vector<n> {
-    Vector<n> neg = 0.f;
+    Vector<n> neg = 0.;
     MAFS_FOR(n) neg = -vec[i];
     return neg;
 }
 
 vec_fn dot(Vector<n> lhs, Vector<n> rhs) -> Scalar {
-    Scalar sum = 0.f;
+    Scalar sum = 0.;
     MAFS_FOR(n) sum += lhs[i] * rhs[i];
     return sum;
 }
 
 vec_fn magnitude(Vector<n> vec) -> Scalar {
-    Scalar abs = 0.f;
+    Scalar abs = 0.;
     MAFS_FOR(n) abs += vec[i] * vec[i];
     return std::sqrt(abs);
 }
@@ -132,7 +130,9 @@ vec_fn are_linearly_dependant(Vector<n> a, Vector<n> b) -> bool {
 
 mat_fn vector_from_column(Matrix<n, m> mat, i64 c) -> Vector<m> {
     Vector<m> out;
-    MAFS_FOR(m) out[i] = mat[c][i];
+    MAFS_FOR(m) {
+        out[i] = mat[c][i];
+    }
     return out;
 }
 
@@ -140,7 +140,9 @@ mat_fn vector_from_column(Matrix<n, m> mat, i64 c) -> Vector<m> {
 
 mat_fn transform(Matrix<n, m> mat, Vector<n> vec) -> Vector<m> {
     Vector<m> out = { 0 };
-    MAFS_FOR(n) out = out + vector_from_column(mat, i) * vec[i];
+    MAFS_FOR(n) {
+        out = out + vector_from_column(mat, i) * vec[i];
+    }
     return out;
 }
 
@@ -163,7 +165,7 @@ vec_fn compose(Matrix<n, n> a, Matrix<n, n> b) -> Matrix<n, n> {
     Matrix<n, n> out;
     MAFS_FOR(n) {
         Vector<n> col = vector_from_column(b, i);
-        col =  transform(a, col);
+        col = transform(a, col);
         for (i64 j = 0; j < n; j++) out[i][j] = col[j];
     }
     return out;
@@ -175,7 +177,7 @@ vec_fn determinant(Matrix<n, n> mat) -> Scalar {
                       - mat[1][0] * (mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1])
                       + mat[2][0] * (mat[0][1] * mat[1][2] - mat[1][1] * mat[0][2]);
     assert(false && "Determinant of arbitrary square matrices will be added in the future");
-    return 0.f;
+    return 0.;
 }
 
 
@@ -187,17 +189,70 @@ vec_fn unit_vector(Direction dir) -> Vector<n> {
     assert((i64) dir < n && "Vector is too small to have a component in this direction");
 
     Vector<n> unit;
-    MAFS_FOR(n) unit[i] = 0.f;
-    unit[(i64) dir] = 1.f;
+    MAFS_FOR(n) unit[i] = 0.;
+    unit[(i64) dir] = 1.;
 
     return unit;
 }
 
 
 
+
+
+union Quaternion {
+    Vector<4> vec;
+    struct { Scalar r, i, j, k; };
+};
+
+auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
+    const Scalar roll  = euler_angles.x / 2.;
+    const Scalar pitch = euler_angles.y / 2.;
+    const Scalar yaw   = euler_angles.z / 2.;
+
+    Quaternion quat;
+
+    // It is slow to evaluate all these, we will make a lookup table or something in the future
+    quat.r = std::cos(roll) * std::cos(pitch) * std::cos(yaw) + std::sin(roll) * std::sin(pitch) * std::sin(yaw);
+    quat.i = std::sin(roll) * std::cos(pitch) * std::cos(yaw) - std::cos(roll) * std::sin(pitch) * std::sin(yaw);
+    quat.j = std::cos(roll) * std::sin(pitch) * std::cos(yaw) + std::sin(roll) * std::cos(pitch) * std::sin(yaw);
+    quat.k = std::cos(roll) * std::cos(pitch) * std::sin(yaw) - std::sin(roll) * std::sin(pitch) * std::cos(yaw);
+
+    quat.vec = normalise(quat.vec);
+    return quat;
+}
+
+auto sign(Scalar x) -> Scalar {
+    if (x < 0.) return -1.;
+    return 1.;
+}
+
+auto quat_to_euler(Quaternion quat) -> Vector<3> {
+    Vector<3> euler_angles = { 0 };
+    quat.vec = normalise(quat.vec);
+    {
+        const Scalar a =      2. * (quat.r * quat.i + quat.j * quat.k);
+        const Scalar b = 1. - 2. * (quat.i * quat.i + quat.j * quat.j);
+        euler_angles.x = std::atan2(a, b);
+    }
+
+    const Scalar intermediate   = 2. * (quat.r * quat.j - quat.k * quat.i);
+    if (std::abs(intermediate) >= 1.) euler_angles.y = sign(intermediate) * pi / 2.;
+    else euler_angles.y = std::asin(intermediate);
+
+    {
+        const Scalar a =      2. * (quat.r * quat.k + quat.i * quat.j);
+        const Scalar b = 1. - 2. * (quat.j * quat.j + quat.k * quat.k);
+        euler_angles.z = std::atan2(a, b);
+    }
+    return euler_angles;
+}
+
+
+
 auto print(Scalar scalar) -> std::string {
     std::string str = std::to_string(scalar);
-    return str.substr(0, str.size() - 3);
+    if (str.size() > 4) return str.substr(0, str.size() - 3);
+    return str;
 }
 
 vec_fn print(Vector<n> vec) -> std::string {

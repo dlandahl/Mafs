@@ -13,9 +13,9 @@ auto main() -> i32 {
     // [-2  0  0 ] [ 2 ] = [ 2 ]
     //             [ 2 ]
     //
-    // Matrices are mat[c][r], which may be less cache friendly than [r][c],
-    // but it's more intuitive in terms of the maths that's happening.
-    // It's an experiment, I may change it in the future for cache and data locality niceness.
+    // Matrices are mat[c][r], which may be less cache friendly than [r][c], but
+    // it's more intuitive for me in terms of the maths that's happening.
+    // I may fix it in the future for cache and data locality niceness.
     //
     )";
 
@@ -60,6 +60,28 @@ auto main() -> i32 {
         std::cout << "\tDeterminant: ";
         std::cout << print(determinant(mat)) << "\n\n";
     }
+
+
+    std::cout << R"(
+    //
+    // Go between Vector<3> euler angles and quaternions
+    //
+    // q ([ pi, 0, -pi/2 ])
+    //
+    // We use z-up
+    //
+    )";
+
+    {
+        Vector<3> euler_angles = { pi, 0, -pi / 2. };
+        Quaternion q = euler_to_quat(euler_angles);
+
+        std::cout << "\tQuaternion from Eulers: ";
+        std::cout << print(q.vec) << "\n";
+        std::cout << "\tEulers from Quaternion: ";
+        std::cout << print(quat_to_euler(q)) << "\n\n";
+    }
+
 
     std::cout << std::flush;
 }

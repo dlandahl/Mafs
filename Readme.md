@@ -23,6 +23,7 @@ More stuff will be added soon, including:
  - Find inverse matrix
  - Cross product of course
  - Possibly a swizzling system
+ - Cofactor and adjunct matrices
 
 
 <br /><br />
