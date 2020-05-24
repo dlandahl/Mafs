@@ -15,6 +15,7 @@ using Scalar = double;
 const inline Scalar pi = 3.14159265;
 
 #define MAFS_FOR(N)  for (i64 i = 0; i < (N); i++)
+#define MAFS_FOR2(N, M)  MAFS_FOR(N) for (i64 j = 0; j < (M); j++)
 #define vec_fn  template <i64 n> auto
 #define mat_fn  template <i64 n, i64 m> auto
 
@@ -65,7 +66,7 @@ union Quaternion {
     Vector<4> vec;
     struct { Scalar r, i, j, k; };
 };
-const inline Quaternion identity = { 1, 0, 0, 0 };
+const inline Quaternion identity_quat = { 1, 0, 0, 0 };
 
 
 
@@ -76,16 +77,15 @@ inline auto sign(Scalar x) -> Scalar {
 
 
 #define OPERATION_ON_VECTORS(op)                                               \
-template <i64 a, i64 b>                                                        \
-auto operator op(Vector<a> lhs, Vector<b> rhs) -> Vector<std::max(a, b)> {     \
-    const i64 greater  = std::max(a, b);                                       \
-    const i64 smaller = std::min(a, b);                                        \
+mat_fn operator op(Vector<n> lhs, Vector<m> rhs) -> Vector<std::max(n, m)> {   \
+    const i64 greater  = std::max(n, m);                                       \
+    const i64 smaller = std::min(n, m);                                        \
                                                                                \
     Vector<greater> out;                                                       \
                                                                                \
     MAFS_FOR(greater) {                                                        \
         if (i < smaller) out[i] = rhs[i] op lhs[i];                            \
-        else out[i] = a > b ? lhs[i] : rhs[i];                                 \
+        else out[i] = n > m ? lhs[i] : rhs[i];                                 \
     }                                                                          \
                                                                                \
     return out;                                                                \
@@ -110,6 +110,45 @@ OPERATION_ON_VECTOR_AND_SCALAR(-)
 OPERATION_ON_VECTOR_AND_SCALAR(*)
 OPERATION_ON_VECTOR_AND_SCALAR(/)
 #undef OPERATION_ON_VECTOR_AND_SCALAR
+
+
+#define OPERATION_ON_SCALAR_AND_VECTOR(op)                                     \
+vec_fn operator op(Scalar lhs, Vector<n> rhs) -> Vector<n> {                   \
+    return rhs op lhs;                                                         \
+}                                                                              \
+
+OPERATION_ON_SCALAR_AND_VECTOR(+)
+OPERATION_ON_SCALAR_AND_VECTOR(-)
+OPERATION_ON_SCALAR_AND_VECTOR(*)
+#undef OPERATION_ON_SCALAR_AND_VECTOR
+
+
+#define OPERATION_ON_MATRIX_AND_SCALAR(op)                                     \
+mat_fn operator op(Matrix<n, m> lhs, Scalar rhs) -> Matrix<n, m> {             \
+    Matrix<n, m> out;                                                          \
+    MAFS_FOR2(n, m) {                                                          \
+        out[i][j] = lhs[i][j] op rhs;                                          \
+    }                                                                          \
+    return out;                                                                \
+}                                                                              \
+
+OPERATION_ON_MATRIX_AND_SCALAR(+)
+OPERATION_ON_MATRIX_AND_SCALAR(-)
+OPERATION_ON_MATRIX_AND_SCALAR(*)
+OPERATION_ON_MATRIX_AND_SCALAR(/)
+#undef OPERATION_ON_VECTOR_AND_SCALAR
+
+
+#define OPERATION_ON_SCALAR_AND_MATRIX(op)                                     \
+mat_fn operator op(Scalar lhs, Matrix<n, m> rhs) -> Matrix<n, m> {             \
+    return rhs op lhs;                                                         \
+}                                                                              \
+
+OPERATION_ON_SCALAR_AND_MATRIX(+)
+OPERATION_ON_SCALAR_AND_MATRIX(-)
+OPERATION_ON_SCALAR_AND_MATRIX(*)
+#undef OPERATION_ON_SCALAR_AND_MATRIX
+
 
 
 
@@ -199,6 +238,10 @@ vec_fn compose(Matrix<n, n> a, Matrix<n, n> b) -> Matrix<n, n> {
     return out;
 }
 
+vec_fn operator*(Matrix<n, n> lhs, Matrix<n, n> rhs) -> Matrix<n, n> {
+    return compose(lhs, rhs);
+}
+
 vec_fn determinant(Matrix<n, n> mat) -> Scalar {
     if (n == 2)  return mat[0][0] *  mat[1][1] - mat[1][0] * mat[0][1];
     if (n == 3)  return mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1])
@@ -253,7 +296,6 @@ inline auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
 
     Quaternion quat;
 
-    // It may be slow to evaluate all these, we will make a lookup table or something in the future
     quat.r = std::cos(roll) * std::cos(pitch) * std::cos(yaw) + std::sin(roll) * std::sin(pitch) * std::sin(yaw);
     quat.i = std::sin(roll) * std::cos(pitch) * std::cos(yaw) - std::cos(roll) * std::sin(pitch) * std::sin(yaw);
     quat.j = std::cos(roll) * std::sin(pitch) * std::cos(yaw) + std::sin(roll) * std::cos(pitch) * std::sin(yaw);
@@ -285,6 +327,7 @@ inline auto quat_to_euler(Quaternion quat) -> Vector<3> {
 }
 
 inline auto rotation_matrix_of(Quaternion quat) -> Matrix<3, 3> {
+    quat.normalise();
     Scalar x = quat.i, y = quat.j, z = quat.k, w = quat.r;
     return transpose(Matrix<3, 3> { 1. - 2*y*y - 2*z*z, 2*x*y - 2*x*z, 2*x*z + 2*y*w,
                                     2*x*y + 2*z*w, 1. - 2*x*x - 2*z*z, 2*y*z - 2*x*w,

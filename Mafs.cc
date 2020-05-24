@@ -3,7 +3,7 @@
 
 using namespace mafs;
 
-auto main() -> i32 {
+auto demo() -> void {
 
     std::cout << R"(
     //
@@ -121,9 +121,10 @@ auto main() -> i32 {
         std::cout << print(rotation_matrix_of(quat)) << "\n\n";
     }
 
-    std::cout << "\n\nMore things to do: " << "\n";
-    std::cout << " - Cross and dot products:\n\t" << print(cross(Vector<3> { 3, -1, 0.3 }, Vector<3> { -6, 2, 9.2 })) << "\n\n";
+    std::cout << "\n\nMore things to do:\n";
+    std::cout << " - Cross and dot products:\n\t"     << print(cross(Vector<3> { 3, -1, 0.3 }, Vector<3> { -6, 2, 9.2 })) << "\n\n";
     std::cout << " - Generate identity matrices:\n\t" << print(identity_matrix<3, 3>()) << "\n\n";
+
     std::cout << " - Check linear dependance:\n\t{ 3,-1 } and {-6, 2 } are linearly dependant: "
               << (are_linearly_dependant(Vector<2> { 3, -1 }, Vector<2> { -6, 2 }) ? "true" : "false") << "\n\n";
 
@@ -132,5 +133,9 @@ auto main() -> i32 {
 
     std::cout << " - Multiply, invert, or conjugate Quaternions:\n\t" << print(Quaternion { 0.3, 0.2, 0.2, 0.6 } *
                                                                                Quaternion { 0.3, 0.2, 0.2, 0.6}) << "\n\n";
+}
 
+auto main() -> i32 {
+    mafs::Matrix<2, 2> mat = { 1, 2, 5, 3 };
+    std::cout <<   mafs::print(mat / 2. * mafs::Matrix<2, 2> { 1, 0, 1, 1 })   << "\n";
 }
