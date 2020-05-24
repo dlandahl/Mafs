@@ -37,7 +37,7 @@ union Vector {
 #define SPECIALIZE_VECTOR(N, components)  \
 template<> union Vector<N> {              \
     Scalar data[N];                       \
-    struct { Scalar components ; };       \
+    struct { Scalar components; };        \
     auto operator[](i64 i) -> Scalar& {   \
         return data[i];                   \
     }                                     \
@@ -51,7 +51,6 @@ SPECIALIZE_VECTOR(4, x COMMA y COMMA z COMMA w);
 #undef SPECIALIZE_VECTOR
 
 
-
 template <i64 n, i64 m>
 struct Matrix {
     Scalar data[n][m];
@@ -61,6 +60,35 @@ struct Matrix {
     }
 };
 
+
+union Quaternion {
+    Vector<4> vec;
+    struct { Scalar r, i, j, k; };
+};
+const inline  Quaternion identity = { 1, 0, 0, 0 };
+
+/*
+struct Quaternion_Interpolator {
+    Quaternion current;
+    Quaternion target;
+    i64 num_steps;
+
+    auto operator()() -> Quaternion {
+
+    }
+
+    Quaternion(Quaternion a, Quaternion b, i64 steps) :
+        current(a), target(b), num_steps(steps)
+    {}
+    
+};
+*/
+
+
+auto sign(Scalar x) -> Scalar {
+    if (x < 0.) return -1.;
+    return 1.;
+}
 
 
 #define OPERATION_ON_VECTORS(op)                                               \
@@ -100,9 +128,15 @@ OPERATION_ON_VECTOR_AND_SCALAR(/)
 #undef OPERATION_ON_VECTOR_AND_SCALAR
 
 
-vec_fn negate(Vector<n> vec) -> Vector<n> {
-    Vector<n> neg = 0.;
-    MAFS_FOR(n) neg = -vec[i];
+
+vec_fn operator==(Vector<n> a, Vector<n> b) -> bool {
+    MAFS_FOR(n) if (a[i] != b[i]) return false;
+    return true;
+}
+
+vec_fn operator-(Vector<n> vec) -> Vector<n> {
+    Vector<n> neg = { 0. };
+    MAFS_FOR(n) neg[i] = -vec[i];
     return neg;
 }
 
@@ -110,6 +144,13 @@ vec_fn dot(Vector<n> lhs, Vector<n> rhs) -> Scalar {
     Scalar sum = 0.;
     MAFS_FOR(n) sum += lhs[i] * rhs[i];
     return sum;
+}
+
+auto cross(Vector<3> lhs, Vector<3> rhs) -> Vector<3> {
+    const Scalar x = { lhs.y * rhs.z - lhs.z * rhs.y };
+    const Scalar y = { lhs.z * rhs.x - lhs.x * rhs.z };
+    const Scalar z = { lhs.x * rhs.y - lhs.y * rhs.x };
+    return { x, y, z };
 }
 
 vec_fn magnitude(Vector<n> vec) -> Scalar {
@@ -150,13 +191,16 @@ mat_fn operator*(Matrix<n, m> mat, Vector<n> vec) -> Vector<m> {
     return transform(mat, vec);
 }
 
-
-
+mat_fn identity_matrix() -> Matrix<n, m> {
+    Matrix<n, m> mat = { 0. };
+    MAFS_FOR(std::min(n, m)) mat[i][i] = 1.f;
+    return mat;
+}
 
 mat_fn transpose(Matrix<n, m> mat) -> Matrix<m, n> {
     Matrix<m, n> out;
     MAFS_FOR(n) {
-        for (i64 j = 0; j < m; j++) mat[i][j] = out[j][i];
+        for (i64 j = 0; j < m; j++) out[i][j] = mat[j][i];
     }
     return out;
 }
@@ -197,12 +241,26 @@ vec_fn unit_vector(Direction dir) -> Vector<n> {
 
 
 
+auto conjugate(Quaternion quat) -> Quaternion {
+    return Quaternion { quat.r, -quat.i, -quat.j, -quat.k };
+}
 
+auto inverse(Quaternion quat) -> Quaternion {
+    Quaternion out;
+    out.vec = { conjugate(quat).vec / magnitude(quat.vec) };
+    return out;
+}
 
-union Quaternion {
-    Vector<4> vec;
-    struct { Scalar r, i, j, k; };
-};
+auto operator*(Quaternion lhs, Quaternion rhs) -> Quaternion {
+    Vector<3> lhs_vector = { lhs.i, lhs.j, lhs.k };
+    Vector<3> rhs_vector = { rhs.i, rhs.j, rhs.k };
+    Vector<3> product = cross(lhs_vector, rhs_vector);
+
+    Vector<3> vector_part = product + rhs_vector * lhs.r + lhs_vector * rhs.r;
+    Scalar scalar_part = lhs.r * rhs.r - dot(lhs_vector, rhs_vector);
+
+    return Quaternion { scalar_part, vector_part[0], vector_part[1], vector_part[2] };
+}
 
 auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
     const Scalar roll  = euler_angles.x / 2.;
@@ -211,7 +269,7 @@ auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
 
     Quaternion quat;
 
-    // It is slow to evaluate all these, we will make a lookup table or something in the future
+    // It may be slow to evaluate all these, we will make a lookup table or something in the future
     quat.r = std::cos(roll) * std::cos(pitch) * std::cos(yaw) + std::sin(roll) * std::sin(pitch) * std::sin(yaw);
     quat.i = std::sin(roll) * std::cos(pitch) * std::cos(yaw) - std::cos(roll) * std::sin(pitch) * std::sin(yaw);
     quat.j = std::cos(roll) * std::sin(pitch) * std::cos(yaw) + std::sin(roll) * std::cos(pitch) * std::sin(yaw);
@@ -219,11 +277,6 @@ auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
 
     quat.vec = normalise(quat.vec);
     return quat;
-}
-
-auto sign(Scalar x) -> Scalar {
-    if (x < 0.) return -1.;
-    return 1.;
 }
 
 auto quat_to_euler(Quaternion quat) -> Vector<3> {
@@ -247,6 +300,18 @@ auto quat_to_euler(Quaternion quat) -> Vector<3> {
     return euler_angles;
 }
 
+auto rotation_matrix_of(Quaternion quat) -> Matrix<3, 3> {
+    Scalar x = quat.i, y = quat.j, z = quat.k, w = quat.r;
+    return transpose(Matrix<3, 3> { 1. - 2*y*y - 2*z*z, 2*x*y - 2*x*z, 2*x*z + 2*y*w,
+                                    2*x*y + 2*z*w, 1. - 2*x*x - 2*z*z, 2*y*z - 2*x*w,
+                                    2*x*z - 2*y*w, 2*y*z + 2*x*w, 1. - 2*x*x - 2*y*y });
+}
+
+auto nlerp_quaternions(Quaternion start, Quaternion end, Scalar t) -> Quaternion {
+    Vector<4> vec = normalise(start.vec * (1. - t) + end.vec * t);
+    return Quaternion { vec };
+}
+
 
 
 auto print(Scalar scalar) -> std::string {
@@ -268,6 +333,10 @@ mat_fn print(Matrix<n, m> mat) -> std::string {
         out += print(vector_from_column(mat, i));
     }
     return out + "]";
+}
+
+auto print(Quaternion quat) -> std::string {
+    return print(quat.vec);
 }
 
 }
