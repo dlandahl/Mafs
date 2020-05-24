@@ -327,7 +327,7 @@ inline auto quat_to_euler(Quaternion quat) -> Vector<3> {
 }
 
 inline auto rotation_matrix_of(Quaternion quat) -> Matrix<3, 3> {
-    quat.normalise();
+    quat.vec = normalise(quat.vec);
     Scalar x = quat.i, y = quat.j, z = quat.k, w = quat.r;
     return transpose(Matrix<3, 3> { 1. - 2*y*y - 2*z*z, 2*x*y - 2*x*z, 2*x*z + 2*y*w,
                                     2*x*y + 2*z*w, 1. - 2*x*x - 2*z*z, 2*y*z - 2*x*w,

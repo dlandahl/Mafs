@@ -136,6 +136,5 @@ auto demo() -> void {
 }
 
 auto main() -> i32 {
-    mafs::Matrix<2, 2> mat = { 1, 2, 5, 3 };
-    std::cout <<   mafs::print(mat / 2. * mafs::Matrix<2, 2> { 1, 0, 1, 1 })   << "\n";
+    demo();
 }
