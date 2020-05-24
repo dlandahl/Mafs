@@ -69,7 +69,7 @@ const inline  Quaternion identity = { 1, 0, 0, 0 };
 
 
 
-auto sign(Scalar x) -> Scalar {
+inline auto sign(Scalar x) -> Scalar {
     if (x < 0.) return -1.;
     return 1.;
 }
@@ -130,7 +130,7 @@ vec_fn dot(Vector<n> lhs, Vector<n> rhs) -> Scalar {
     return sum;
 }
 
-auto cross(Vector<3> lhs, Vector<3> rhs) -> Vector<3> {
+inline auto cross(Vector<3> lhs, Vector<3> rhs) -> Vector<3> {
     const Scalar x = { lhs.y * rhs.z - lhs.z * rhs.y };
     const Scalar y = { lhs.z * rhs.x - lhs.x * rhs.z };
     const Scalar z = { lhs.x * rhs.y - lhs.y * rhs.x };
@@ -225,11 +225,11 @@ vec_fn unit_vector(Direction dir) -> Vector<n> {
 
 
 
-auto conjugate(Quaternion quat) -> Quaternion {
+inline auto conjugate(Quaternion quat) -> Quaternion {
     return Quaternion { quat.r, -quat.i, -quat.j, -quat.k };
 }
 
-auto inverse(Quaternion quat) -> Quaternion {
+inline auto inverse(Quaternion quat) -> Quaternion {
     Quaternion out;
     out.vec = { conjugate(quat).vec / magnitude(quat.vec) };
     return out;
@@ -246,7 +246,7 @@ auto operator*(Quaternion lhs, Quaternion rhs) -> Quaternion {
     return Quaternion { scalar_part, vector_part[0], vector_part[1], vector_part[2] };
 }
 
-auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
+inline auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
     const Scalar roll  = euler_angles.x / 2.;
     const Scalar pitch = euler_angles.y / 2.;
     const Scalar yaw   = euler_angles.z / 2.;
@@ -263,7 +263,7 @@ auto euler_to_quat(Vector<3> euler_angles) -> Quaternion {
     return quat;
 }
 
-auto quat_to_euler(Quaternion quat) -> Vector<3> {
+inline auto quat_to_euler(Quaternion quat) -> Vector<3> {
     Vector<3> euler_angles = { 0 };
     quat.vec = normalise(quat.vec);
     {
@@ -284,21 +284,21 @@ auto quat_to_euler(Quaternion quat) -> Vector<3> {
     return euler_angles;
 }
 
-auto rotation_matrix_of(Quaternion quat) -> Matrix<3, 3> {
+inline auto rotation_matrix_of(Quaternion quat) -> Matrix<3, 3> {
     Scalar x = quat.i, y = quat.j, z = quat.k, w = quat.r;
     return transpose(Matrix<3, 3> { 1. - 2*y*y - 2*z*z, 2*x*y - 2*x*z, 2*x*z + 2*y*w,
                                     2*x*y + 2*z*w, 1. - 2*x*x - 2*z*z, 2*y*z - 2*x*w,
                                     2*x*z - 2*y*w, 2*y*z + 2*x*w, 1. - 2*x*x - 2*y*y });
 }
 
-auto nlerp_quaternions(Quaternion start, Quaternion end, Scalar t) -> Quaternion {
+inline auto nlerp_quaternions(Quaternion start, Quaternion end, Scalar t) -> Quaternion {
     Vector<4> vec = normalise(start.vec * (1. - t) + end.vec * t);
     return Quaternion { vec };
 }
 
 
 
-auto print(Scalar scalar) -> std::string {
+inline auto print(Scalar scalar) -> std::string {
     std::string str = std::to_string(scalar);
     if (str.size() > 4) return str.substr(0, str.size() - 3);
     return str;
@@ -319,7 +319,7 @@ mat_fn print(Matrix<n, m> mat) -> std::string {
     return out + "]";
 }
 
-auto print(Quaternion quat) -> std::string {
+inline auto print(Quaternion quat) -> std::string {
     return print(quat.vec);
 }
 
