@@ -65,7 +65,7 @@ union Quaternion {
     Vector<4> vec;
     struct { Scalar r, i, j, k; };
 };
-const inline  Quaternion identity = { 1, 0, 0, 0 };
+const inline Quaternion identity = { 1, 0, 0, 0 };
 
 
 
@@ -235,7 +235,7 @@ inline auto inverse(Quaternion quat) -> Quaternion {
     return out;
 }
 
-auto operator*(Quaternion lhs, Quaternion rhs) -> Quaternion {
+inline auto operator*(Quaternion lhs, Quaternion rhs) -> Quaternion {
     Vector<3> lhs_vector = { lhs.i, lhs.j, lhs.k };
     Vector<3> rhs_vector = { rhs.i, rhs.j, rhs.k };
     Vector<3> product = cross(lhs_vector, rhs_vector);
