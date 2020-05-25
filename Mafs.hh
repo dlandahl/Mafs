@@ -32,9 +32,6 @@ union Vector {
     }
 };
 
-// Vector template specialization allows us to prevent use of
-// vector components that aren't in a vector of that size.
-// So, access specifying the `z` component of a `Vector<2>` is a compile-time error
 #define SPECIALIZE_VECTOR(N, components)  \
 template<> union Vector<N> {              \
     Scalar data[N];                       \
@@ -118,7 +115,6 @@ vec_fn operator op(Scalar lhs, Vector<n> rhs) -> Vector<n> {                   \
 }                                                                              \
 
 OPERATION_ON_SCALAR_AND_VECTOR(+)
-OPERATION_ON_SCALAR_AND_VECTOR(-)
 OPERATION_ON_SCALAR_AND_VECTOR(*)
 #undef OPERATION_ON_SCALAR_AND_VECTOR
 
@@ -145,7 +141,6 @@ mat_fn operator op(Scalar lhs, Matrix<n, m> rhs) -> Matrix<n, m> {             \
 }                                                                              \
 
 OPERATION_ON_SCALAR_AND_MATRIX(+)
-OPERATION_ON_SCALAR_AND_MATRIX(-)
 OPERATION_ON_SCALAR_AND_MATRIX(*)
 #undef OPERATION_ON_SCALAR_AND_MATRIX
 
