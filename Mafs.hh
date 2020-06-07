@@ -119,6 +119,19 @@ OPERATION_ON_SCALAR_AND_VECTOR(*)
 #undef OPERATION_ON_SCALAR_AND_VECTOR
 
 
+#define OPERATION_ON_MATRICES(op)                                              \
+mat_fn operator op(Matrix<n, m> lhs, Matrix<n, m> rhs) -> Matrix<n, m> {       \
+    Matrix<n, m> out;                                                          \
+    MAFS_FOR2(n, m) {                                                          \
+        out[i][j] = lhs[i][j] op rhs[i][j];                                    \
+    }                                                                          \
+    return out;                                                                \
+}                                                                              \
+
+OPERATION_ON_MATRICES(+)
+OPERATION_ON_MATRICES(-)
+#undef OPERATION_ON_MATRICES
+
 #define OPERATION_ON_MATRIX_AND_SCALAR(op)                                     \
 mat_fn operator op(Matrix<n, m> lhs, Scalar rhs) -> Matrix<n, m> {             \
     Matrix<n, m> out;                                                          \
@@ -132,8 +145,7 @@ OPERATION_ON_MATRIX_AND_SCALAR(+)
 OPERATION_ON_MATRIX_AND_SCALAR(-)
 OPERATION_ON_MATRIX_AND_SCALAR(*)
 OPERATION_ON_MATRIX_AND_SCALAR(/)
-#undef OPERATION_ON_VECTOR_AND_SCALAR
-
+#undef OPERATION_ON_MATRIX_AND_SCALAR
 
 #define OPERATION_ON_SCALAR_AND_MATRIX(op)                                     \
 mat_fn operator op(Scalar lhs, Matrix<n, m> rhs) -> Matrix<n, m> {             \
