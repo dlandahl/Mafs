@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <cassert>
 #include <iostream>
 #include <iomanip>
@@ -12,7 +13,7 @@ using i32 = int32_t;
 using i64 = int64_t;
 
 using Scalar = double;
-const inline Scalar pi = 3.14159265;
+const inline Scalar pi = 3.141592653589793;
 
 #define MAFS_FOR(N)  for (i64 i = 0; i < (N); i++)
 #define MAFS_FOR2(N, M)  MAFS_FOR(N) for (i64 j = 0; j < (M); j++)
@@ -22,7 +23,7 @@ const inline Scalar pi = 3.14159265;
 
 template <i64 n>
 union Vector {
-    static_assert(n > 1, "Vector size must be at least 2");
+    static_assert(n > 0, "Vector size must be at least 1");
 
     Scalar data[n];
     struct { Scalar x, y, z, w; };
@@ -42,6 +43,7 @@ template<> union Vector<N> {              \
 }                                         \
 
 #define COMMA ,
+SPECIALIZE_VECTOR(1, x);
 SPECIALIZE_VECTOR(2, x COMMA y);
 SPECIALIZE_VECTOR(3, x COMMA y COMMA z);
 SPECIALIZE_VECTOR(4, x COMMA y COMMA z COMMA w);

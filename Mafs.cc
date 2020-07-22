@@ -129,7 +129,7 @@ auto demo() -> void {
               << (are_linearly_dependant(Vector<2> { 3, -1 }, Vector<2> { -6, 2 }) ? "true" : "false") << "\n\n";
 
     std::cout << " - Get magnitude and normalise:\n\t{ 3, 6, 5 } has magnitude: "
-              << print(magnitude(Vector<3> {6, 3, 2})) << ". Normed: " << print(normalise(Vector<3> {6, 3, 2})) << "\n\n";
+              << print(magnitude(Vector<3> {3, 6, 5})) << ". Normed: " << print(normalise(Vector<3> {3, 6, 5})) << "\n\n";
 
     std::cout << " - Multiply, invert, or conjugate Quaternions:\n\t" << print(Quaternion { 0.3, 0.2, 0.2, 0.6 } *
                                                                                Quaternion { 0.3, 0.2, 0.2, 0.6}) << "\n\n";
